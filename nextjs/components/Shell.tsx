@@ -33,14 +33,19 @@ export default function Shell({ children }: { children: ReactNode }) {
   return (
     <>
       <header className="top">
-        <span className="brand">4axiz SLA</span>
-        {nav.map(([href, label]) => (
-          <Link key={href} href={href} className={(href === '/' ? path === '/' : path.startsWith(href)) ? 'active' : ''}>
-            {label}
-          </Link>
-        ))}
+        <Link href="/" className="brand">
+          <span className="brand-mark">4x</span>
+          <span className="name">SLA Admin</span>
+        </Link>
+        <nav className="nav">
+          {nav.map(([href, label]) => (
+            <Link key={href} href={href} className={(href === '/' ? path === '/' : path.startsWith(href)) ? 'active' : ''}>
+              {label}
+            </Link>
+          ))}
+        </nav>
         <span className="spacer" />
-        <a href="#" onClick={(e) => { e.preventDefault(); logout(); }}>Logout</a>
+        <a href="#" className="logout" onClick={(e) => { e.preventDefault(); logout(); }}>Logout</a>
       </header>
       <main>{children}</main>
     </>

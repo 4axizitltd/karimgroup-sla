@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import Shell from '@/components/Shell';
@@ -23,9 +24,17 @@ export default function ClientDetail() {
 
   return (
     <Shell>
-      <h1>{client.name} <span className="muted">({client.code})</span></h1>
+      <Link href="/clients" className="crumb">← All clients</Link>
+      <div className="page-head">
+        <div className="client-head">
+          <div className="avatar">{client.code.slice(0, 2).toUpperCase()}</div>
+          <div>
+            <h1>{client.name} <span className="muted">({client.code})</span></h1>
+            <p className="page-sub">{[client.contact_person, client.phone, client.email].filter(Boolean).join(' · ') || 'No contact details'}</p>
+          </div>
+        </div>
+      </div>
       {error && <div className="error">{error}</div>}
-      <p className="muted">{[client.contact_person, client.phone, client.email].filter(Boolean).join(' · ') || 'No contact details'}</p>
 
       {client.subscriptions.map((s: any) => (
         <Subscription key={s.id} sub={s} clientCode={client.code} onChange={load} onError={setError} />
@@ -66,16 +75,15 @@ function Subscription({ sub, clientCode, onChange, onError }: any) {
 
   return (
     <div className="card">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h2 style={{ margin: 0 }}>{sub.application.name} <span className="muted">({sub.application.code})</span></h2>
-        <div className="row">
-          <span className="muted">Covered until <strong>{fmtDate(sub.covered_until)}</strong></span>
-          <span className={`badge ${sub.is_active ? 'b-active' : 'b-expired'}`}>{sub.is_active ? 'Enabled' : 'Disabled'}</span>
-        </div>
+      <div className="card-head">
+        <h2>{sub.application.name} <span className="muted">({sub.application.code})</span></h2>
+        <span className={`badge ${sub.is_active ? 'b-active' : 'b-expired'}`}>{sub.is_active ? 'Enabled' : 'Disabled'}</span>
       </div>
-      <p className="muted">
-        Per quarter: ৳ {fmtMoney(sub.quarterly_amount)} · Installation ID: <code>{sub.install_id || 'not activated yet'}</code>
-      </p>
+      <div className="sub-meta">
+        <div><div className="k">Covered until</div><div className="v">{fmtDate(sub.covered_until)}</div></div>
+        <div><div className="k">Per quarter</div><div className="v">৳ {fmtMoney(sub.quarterly_amount)}</div></div>
+        <div><div className="k">Installation ID</div><div className="v">{sub.install_id ? <code>{sub.install_id}</code> : <span className="muted">Not activated yet</span>}</div></div>
+      </div>
       <div className="row" style={{ marginBottom: 16 }}>
         <button className="secondary" onClick={() => act(() => api(`/subscriptions/${sub.id}`, { method: 'PATCH', body: { is_active: !sub.is_active } }))}>
           {sub.is_active ? 'Disable' : 'Enable'}
@@ -92,8 +100,8 @@ function Subscription({ sub, clientCode, onChange, onError }: any) {
 
       {issued && <IssuedCode issued={issued} clientCode={clientCode} appName={sub.application.name} />}
 
-      <h2 style={{ marginTop: 20 }}>Activation codes</h2>
-      <div className="table-wrap">
+      <div className="section-title">Activation codes</div>
+      <div className="section-box table-wrap">
         <table>
           <thead><tr><th>Code</th><th>Period</th><th>Status</th><th>Activated</th><th>Last online</th><th></th></tr></thead>
           <tbody>
@@ -108,18 +116,18 @@ function Subscription({ sub, clientCode, onChange, onError }: any) {
                 <td>{c.activated_at ? new Date(c.activated_at).toLocaleString() : '—'}{c.hostname && <div className="muted">{c.hostname}</div>}</td>
                 <td>{c.last_seen_at ? new Date(c.last_seen_at).toLocaleString() : '—'}</td>
                 <td className="row">
-                  {!c.revoked_at && <button className="secondary" onClick={() => showOffline(c)}>Offline key</button>}
-                  {!c.revoked_at && <button className="danger" onClick={() => revoke(c)}>Cancel</button>}
+                  {!c.revoked_at && <button className="secondary sm" onClick={() => showOffline(c)}>Offline key</button>}
+                  {!c.revoked_at && <button className="danger sm" onClick={() => revoke(c)}>Cancel</button>}
                 </td>
               </tr>
             ))}
-            {!sub.activation_codes.length && <tr><td colSpan={6} className="muted">No codes yet.</td></tr>}
+            {!sub.activation_codes.length && <tr><td colSpan={6} className="empty">No codes yet. Record a payment to generate the first one.</td></tr>}
           </tbody>
         </table>
       </div>
 
-      <h2 style={{ marginTop: 20 }}>Payments</h2>
-      <div className="table-wrap">
+      <div className="section-title">Payments</div>
+      <div className="section-box table-wrap">
         <table>
           <thead><tr><th>Paid on</th><th>Period</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead>
           <tbody>
@@ -132,7 +140,7 @@ function Subscription({ sub, clientCode, onChange, onError }: any) {
                 <td>{p.reference || '—'}</td>
               </tr>
             ))}
-            {!sub.payments.length && <tr><td colSpan={5} className="muted">No payments yet.</td></tr>}
+            {!sub.payments.length && <tr><td colSpan={5} className="empty">No payments yet.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -166,7 +174,7 @@ function PaymentForm({ sub, onIssued, onError }: any) {
 
   const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value });
   return (
-    <form className="inline card" style={{ background: '#f8fafc' }} onSubmit={submit}>
+    <form className="inline pay-form" onSubmit={submit}>
       <div><label>SLA from</label><input type="date" value={f.period_from} onChange={set('period_from')} required /></div>
       <div><label>SLA until</label><input type="date" value={f.period_to} onChange={set('period_to')} required /></div>
       <div><label>Amount (৳)</label><input type="number" step="0.01" min="0" value={f.amount} onChange={set('amount')} required /></div>
@@ -195,7 +203,7 @@ function IssuedCode({ issued, appName }: any) {
 
   return (
     <div className="success" style={{ marginTop: 14 }}>
-      <div>Payment saved. Activation code:</div>
+      <div><strong>Payment saved.</strong> Activation code:</div>
       <div className="row" style={{ margin: '8px 0' }}>
         <span className="code">{c.code}</span>
         <button type="button" onClick={() => copy(c.code)}>Copy code</button>
@@ -233,24 +241,29 @@ function AddSubscription({ clientId, apps, onAppsChange, onDone, onError }: any)
       await api('/applications', { method: 'POST', body: newApp });
       setNewApp({ code: '', name: '' });
       onAppsChange();
-    } catch (err: any) { onError(err.message); }
+    } catch (err: any) {
+      onError(/already been taken/i.test(err.message)
+        ? `Application code “${newApp.code}” already exists, so there is nothing to create. If it is not in the list below, it is already added to this client.`
+        : err.message);
+    }
   }
 
   return (
     <div className="card">
-      <h2>Add application for this client</h2>
+      <h2>Add another application</h2>
+      {!apps.length && <p className="hint" style={{ marginTop: -6, marginBottom: 14 }}>Every existing application is already added to this client. Create a new one below if needed.</p>}
       <form className="inline" onSubmit={add}>
         <div><label>Application</label>
-          <select value={appId} onChange={(e) => setAppId(e.target.value)} required>
-            <option value="">Select…</option>
+          <select value={appId} onChange={(e) => setAppId(e.target.value)} required disabled={!apps.length}>
+            <option value="">{apps.length ? 'Select…' : 'All applications already added'}</option>
             {apps.map((a: any) => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
           </select>
         </div>
         <div><label>Amount per quarter (৳)</label><input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
-        <div><button>Add</button></div>
+        <div><button disabled={!apps.length}>Add application</button></div>
       </form>
       <details style={{ marginTop: 12 }}>
-        <summary className="muted">Application not in the list? Create it</summary>
+        <summary className="muted">Application not in the list? Create a new one</summary>
         <form className="inline" style={{ marginTop: 8 }} onSubmit={addApp}>
           <div><label>Code (e.g. HRM)</label><input value={newApp.code} onChange={(e) => setNewApp({ ...newApp, code: e.target.value })} required /></div>
           <div><label>Name</label><input value={newApp.name} onChange={(e) => setNewApp({ ...newApp, name: e.target.value })} required /></div>

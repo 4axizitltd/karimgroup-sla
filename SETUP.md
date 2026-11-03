@@ -69,3 +69,13 @@ $config['sla_online_enabled'] = TRUE;
 | GET/POST | /api/admin/payments | admin (POST also generates the code) |
 | GET | /api/admin/codes, POST /codes/{id}/revoke, GET /codes/{id}/offline-key | admin |
 | GET | /api/admin/logs | admin |
+
+## Live server notes (sla.4axiz.com, 64.227.142.141)
+- Laravel lives in `/var/www/sla.4axiz.com/api`, the admin in `/var/www/sla.4axiz.com/admin` (Next.js, systemd `sla-admin`, port 3010). Config files are in `deploy/`.
+- Two things `install:api` did not do and must be done by hand:
+  1. `bootstrap/app.php`: add `api: __DIR__.'/../routes/api.php',` inside `withRouting(...)`.
+  2. `app/Models/User.php`: `use Laravel\Sanctum\HasApiTokens;` and `use HasApiTokens, HasFactory, Notifiable;`.
+- `api/public/.htaccess` (standard Laravel rewrite file) is needed because Apache serves `public/` directly.
+- `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://sla.4axiz.com`, MySQL database `sla` with its own user (not root).
+- This server also hosts the Biddaniketon platform. Its catch-all vhost answers any domain that has no vhost of its own, so a new domain needs its own :80 and :443 vhost (certbot) before it works.
+- Admin panel update: upload `nextjs/app` and `nextjs/components` to `admin/`, run `npm run build` there as www-data, then `systemctl restart sla-admin`.

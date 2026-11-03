@@ -13,9 +13,14 @@ export default function LogsPage() {
 
   return (
     <Shell>
-      <h1>Activation log</h1>
+      <div className="page-head">
+        <div>
+          <h1>Activation log</h1>
+          <p className="page-sub">Every activation and daily check made by client software.</p>
+        </div>
+      </div>
       {error && <div className="error">{error}</div>}
-      <div className="card"><LogTable rows={rows} /></div>
+      <div className="card flush"><LogTable rows={rows} /></div>
     </Shell>
   );
 }

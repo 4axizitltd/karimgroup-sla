@@ -16,19 +16,26 @@ export default function Dashboard() {
 
   return (
     <Shell>
-      <h1>Dashboard</h1>
+      <div className="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p className="page-sub">SLA status across all clients at a glance.</p>
+        </div>
+        <Link href="/clients"><button className="secondary">Manage clients</button></Link>
+      </div>
       {error && <div className="error">{error}</div>}
+      {!d && !error && <p className="muted">Loading…</p>}
       {d && (
         <>
           <div className="grid">
-            <div className="card"><div className="muted">Active</div><div className="stat" style={{ color: 'var(--ok)' }}>{d.counts.active}</div></div>
-            <div className="card"><div className="muted">Expiring soon</div><div className="stat" style={{ color: 'var(--warn)' }}>{d.counts.expiring}</div></div>
-            <div className="card"><div className="muted">Expired / unpaid</div><div className="stat" style={{ color: 'var(--bad)' }}>{d.counts.expired}</div></div>
-            <div className="card"><div className="muted">Collected this year</div><div className="stat">৳ {fmtMoney(d.collected_this_year)}</div></div>
+            <div className="card stat-card" style={{ ['--accent' as any]: 'var(--ok)' }}><div className="stat-label">Active</div><div className="stat">{d.counts.active}</div></div>
+            <div className="card stat-card" style={{ ['--accent' as any]: 'var(--warn)' }}><div className="stat-label">Expiring soon</div><div className="stat">{d.counts.expiring}</div></div>
+            <div className="card stat-card" style={{ ['--accent' as any]: 'var(--bad)' }}><div className="stat-label">Expired / unpaid</div><div className="stat">{d.counts.expired}</div></div>
+            <div className="card stat-card" style={{ ['--accent' as any]: 'var(--primary)' }}><div className="stat-label">Collected this year</div><div className="stat">৳ {fmtMoney(d.collected_this_year)}</div></div>
           </div>
 
-          <div className="card">
-            <h2>SLA by client</h2>
+          <div className="card flush">
+            <div className="card-head" style={{ padding: '18px 22px 0', marginBottom: 8 }}><h2>SLA by client</h2></div>
             <div className="table-wrap">
               <table>
                 <thead><tr><th>Client</th><th>Application</th><th>Per quarter</th><th>Covered until</th><th>Status</th><th>Last online</th><th></th></tr></thead>
@@ -40,17 +47,18 @@ export default function Dashboard() {
                       <td>৳ {fmtMoney(s.quarterly_amount)}</td>
                       <td>{fmtDate(s.covered_until)}</td>
                       <td><span className={`badge b-${s.state}`}>{LABEL[s.state]}</span></td>
-                      <td>{s.last_seen_at ? new Date(s.last_seen_at).toLocaleString() : '—'}</td>
+                      <td className="muted">{s.last_seen_at ? new Date(s.last_seen_at).toLocaleString() : '—'}</td>
                       <td><Link href={`/clients/${s.client.id}`}>Open →</Link></td>
                     </tr>
                   ))}
+                  {!d.subscriptions.length && <tr><td colSpan={7} className="empty">No subscriptions yet. Add a client and an application to begin.</td></tr>}
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div className="card">
-            <h2>Recent activation activity</h2>
+          <div className="card flush">
+            <div className="card-head" style={{ padding: '18px 22px 0', marginBottom: 8 }}><h2>Recent activation activity</h2></div>
             <LogTable rows={d.recent_logs} />
           </div>
         </>

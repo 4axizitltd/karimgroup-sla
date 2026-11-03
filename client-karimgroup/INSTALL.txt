@@ -1,0 +1,19 @@
+Karim Group - SLA update (4axiz)
+================================
+1. Backup the existing "application" folder of the Karim Group HRM software.
+2. Copy the "application" folder from this package over it (merge, overwrite when asked).
+   Changed/new files:
+     config/sla.php                                  (online mode ON, client KG / app HRM)
+     core/MY_Controller.php, core/Site_Controller.php
+     libraries/Sla_license.php
+     modules/setting/controllers/sla.php, modules/setting/views/v_sla.php
+     modules/setting/views/templates/default/elements/header.php
+     modules/report/views/templates/default/report.php
+     views/sla_blocked.php, views/sla_popup.php      (warning bar in the last 15 days)
+     sla_data/                                       (license is stored here, folder must be writable)
+3. Make sure application/sla_data is writable by the web server (the license is saved in license.json).
+4. Server must reach https://sla.4axiz.com (outbound HTTPS, PHP curl or allow_url_fopen).
+5. Open the software > Setting > SLA Activation and enter the activation code sent by 4axiz.
+
+Reports work only while the SLA is active. In the last 15 days a warning bar shows at the bottom
+of every page; after expiry reports are locked.

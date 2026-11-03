@@ -1,0 +1,16 @@
+# /etc/systemd/system/sla-admin.service   (systemctl enable --now sla-admin)
+[Unit]
+Description=SLA admin (Next.js)
+After=network.target
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=3
+WorkingDirectory=/var/www/sla.4axiz.com/admin
+Environment=NODE_ENV=production
+Environment=PORT=3010
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/npx next start -H 127.0.0.1 -p 3010
+[Install]
+WantedBy=multi-user.target

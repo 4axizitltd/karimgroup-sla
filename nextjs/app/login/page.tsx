@@ -26,14 +26,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login card">
-      <h1>4axiz SLA Admin</h1>
-      {error && <div className="error">{error}</div>}
-      <form onSubmit={submit}>
-        <p><label>Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></p>
-        <p><label>Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></p>
-        <button disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
-      </form>
+    <div className="login-wrap">
+      <div className="login card">
+        <div className="brand"><span className="brand-mark">4x</span></div>
+        <h1>4axiz SLA Admin</h1>
+        <p className="page-sub">Sign in to manage clients and activation codes</p>
+        {error && <div className="error">{error}</div>}
+        <form onSubmit={submit}>
+          <div className="field"><label>Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required /></div>
+          <div className="field"><label>Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required /></div>
+          <button disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        </form>
+      </div>
     </div>
   );
 }

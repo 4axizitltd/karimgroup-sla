@@ -14,7 +14,7 @@ $config['sla_app_code']    = 'HRM';
 $config['sla_protected_modules'] = array('report');
 
 // sla.4axiz.com API
-$config['sla_online_enabled'] = FALSE;                       // set TRUE once the API is live
+$config['sla_online_enabled'] = TRUE;                        // sla.4axiz.com API is live
 $config['sla_api_url']        = 'https://sla.4axiz.com/api';
 $config['sla_api_timeout']    = 5;                            // seconds
 // Responses are RSA-signed, so a forged response cannot create a license.

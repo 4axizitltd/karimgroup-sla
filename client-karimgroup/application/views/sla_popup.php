@@ -18,6 +18,11 @@ $sla_act = site_url('setting/sla');
     .sla-bar { position:fixed; left:0; right:0; bottom:0; z-index:99999; background:#c9302c; color:#fff; text-align:center;
                padding:9px 12px; font:14px Arial,Helvetica,sans-serif; }
     .sla-bar a { color:#fff; text-decoration:underline; font-weight:bold; }
+    .sla-bar.sla-bar-warn { background:#f0ad4e; color:#3b2a00; }
+    .sla-bar.sla-bar-warn a { color:#3b2a00; }
+    .sla-bar.sla-bar-urgent { background:#c9302c; color:#fff; }
+    .sla-bar.sla-bar-urgent a { color:#fff; }
+    body.sla-has-bar { padding-bottom:42px; }
 </style>
 
 <?php if ($sla['valid']) { /* ---- within 15 days of expiry: warning, can be closed ---- */ ?>
@@ -48,6 +53,24 @@ $sla_act = site_url('setting/sla');
     };
 })();
 </script>
+
+<?php
+/* ---- permanent bottom bar for the whole warning window (cannot be closed) ---- */
+$sla_left = (int) $sla['days_left'];
+$sla_until = date('d M Y', strtotime($sla['until']));
+if ($sla_left <= 0) {
+    $sla_en = 'SLA expires TODAY (' . $sla_until . ')';
+    $sla_bn = 'আজই SLA মেয়াদ শেষ';
+} else {
+    $sla_en = 'SLA expires in ' . $sla_left . ' day' . ($sla_left == 1 ? '' : 's') . ' (' . $sla_until . ')';
+    $sla_bn = 'SLA মেয়াদ শেষ হতে আর ' . $sla_left . ' দিন বাকি';
+}
+?>
+<div class="sla-bar <?php echo $sla_left <= 3 ? 'sla-bar-urgent' : 'sla-bar-warn'; ?>" id="slaWarnBar">
+    &#9888; <?php echo $sla_en; ?> &mdash; reports will be locked after that. / <?php echo $sla_bn; ?>, এরপর রিপোর্ট বন্ধ হবে।
+    <a href="<?php echo $sla_act; ?>">Enter activation code</a>
+</div>
+<script>document.body.className += ' sla-has-bar';</script>
 
 <?php } else { /* ---- expired / not active: reports are locked; permanent bar on other pages ---- */ ?>
 <div class="sla-bar">
