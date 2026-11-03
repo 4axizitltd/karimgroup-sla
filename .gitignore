@@ -1,0 +1,16 @@
+# NEVER commit the signing key
+*.pem
+keys/
+
+# Client runtime state
+client-karimgroup/application/sla_data/license.json
+
+# Node / Next.js
+nextjs/node_modules/
+nextjs/.next/
+nextjs/.env.local
+nextjs/next-env.d.ts
+
+# Laravel
+laravel/vendor/
+laravel/.env
