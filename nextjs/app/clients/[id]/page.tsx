@@ -11,6 +11,7 @@ export default function ClientDetail() {
   const [client, setClient] = useState<any>(null);
   const [apps, setApps] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
 
   const load = () => api(`/clients/${id}`).then(setClient).catch((e) => setError(e.message));
   useEffect(() => {
@@ -33,8 +34,10 @@ export default function ClientDetail() {
             <p className="page-sub">{[client.contact_person, client.phone, client.email].filter(Boolean).join(' · ') || 'No contact details'}</p>
           </div>
         </div>
+        <button className="secondary" onClick={() => setEditing(!editing)}>{editing ? 'Close' : 'Edit client'}</button>
       </div>
       {error && <div className="error">{error}</div>}
+      {editing && <EditClient client={client} onDone={() => { setEditing(false); load(); }} onError={setError} />}
 
       {client.subscriptions.map((s: any) => (
         <Subscription key={s.id} sub={s} clientCode={client.code} onChange={load} onError={setError} />
@@ -81,7 +84,7 @@ function Subscription({ sub, clientCode, onChange, onError }: any) {
       </div>
       <div className="sub-meta">
         <div><div className="k">Covered until</div><div className="v">{fmtDate(sub.covered_until)}</div></div>
-        <div><div className="k">Per quarter</div><div className="v">৳ {fmtMoney(sub.quarterly_amount)}</div></div>
+        <div><div className="k">Per quarter</div><div className="v">{Number(sub.quarterly_amount) ? `৳ ${fmtMoney(sub.quarterly_amount)}` : '—'}</div></div>
         <div><div className="k">Installation ID</div><div className="v">{sub.install_id ? <code>{sub.install_id}</code> : <span className="muted">Not activated yet</span>}</div></div>
       </div>
       <div className="row" style={{ marginBottom: 16 }}>
@@ -156,7 +159,7 @@ function PaymentForm({ sub, onIssued, onError }: any) {
   async function open() {
     try {
       const s = await api(`/subscriptions/${sub.id}/suggest-period`);
-      setF({ period_from: s.period_from, period_to: s.period_to, amount: s.amount, paid_at: today, method: 'Bank', reference: '', note: '' });
+      setF({ period_from: s.period_from, period_to: s.period_to, amount: Number(s.amount) ? s.amount : '', paid_at: today, method: 'Bank', reference: '', note: '' });
     } catch (e: any) { onError(e.message); }
   }
 
@@ -164,7 +167,7 @@ function PaymentForm({ sub, onIssued, onError }: any) {
     e.preventDefault();
     setBusy(true); onError('');
     try {
-      const r = await api('/payments', { method: 'POST', body: { ...f, subscription_id: sub.id } });
+      const r = await api('/payments', { method: 'POST', body: { ...f, amount: f.amount === '' ? null : f.amount, subscription_id: sub.id } });
       setF(null);
       onIssued(r);
     } catch (err: any) { onError(err.message); } finally { setBusy(false); }
@@ -177,7 +180,7 @@ function PaymentForm({ sub, onIssued, onError }: any) {
     <form className="inline pay-form" onSubmit={submit}>
       <div><label>SLA from</label><input type="date" value={f.period_from} onChange={set('period_from')} required /></div>
       <div><label>SLA until</label><input type="date" value={f.period_to} onChange={set('period_to')} required /></div>
-      <div><label>Amount (৳)</label><input type="number" step="0.01" min="0" value={f.amount} onChange={set('amount')} required /></div>
+      <div><label>Amount (৳), optional</label><input type="number" step="0.01" min="0" value={f.amount} onChange={set('amount')} placeholder="Leave empty if not needed" /></div>
       <div><label>Paid on</label><input type="date" value={f.paid_at} onChange={set('paid_at')} required /></div>
       <div><label>Method</label>
         <select value={f.method} onChange={set('method')}>
@@ -228,7 +231,7 @@ function AddSubscription({ clientId, apps, onAppsChange, onDone, onError }: any)
     e.preventDefault();
     onError('');
     try {
-      await api('/subscriptions', { method: 'POST', body: { client_id: clientId, application_id: Number(appId), quarterly_amount: Number(amount) } });
+      await api('/subscriptions', { method: 'POST', body: { client_id: clientId, application_id: Number(appId), quarterly_amount: amount === '' ? null : Number(amount) } });
       setAppId(''); setAmount('');
       onDone();
     } catch (err: any) { onError(err.message); }
@@ -259,7 +262,7 @@ function AddSubscription({ clientId, apps, onAppsChange, onDone, onError }: any)
             {apps.map((a: any) => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
           </select>
         </div>
-        <div><label>Amount per quarter (৳)</label><input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
+        <div><label>Amount per quarter (৳), optional</label><input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
         <div><button disabled={!apps.length}>Add application</button></div>
       </form>
       <details style={{ marginTop: 12 }}>
@@ -270,6 +273,49 @@ function AddSubscription({ clientId, apps, onAppsChange, onDone, onError }: any)
           <div><button className="secondary">Create application</button></div>
         </form>
       </details>
+    </div>
+  );
+}
+
+function EditClient({ client, onDone, onError }: any) {
+  const [f, setF] = useState({
+    code: client.code, name: client.name, contact_person: client.contact_person || '', phone: client.phone || '',
+    email: client.email || '', address: client.address || '', is_active: !!client.is_active,
+  });
+  const [busy, setBusy] = useState(false);
+  const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value });
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true); onError('');
+    try {
+      await api(`/clients/${client.id}`, { method: 'PUT', body: {
+        ...f, contact_person: f.contact_person || null, phone: f.phone || null, email: f.email || null, address: f.address || null,
+      } });
+      onDone();
+    } catch (err: any) {
+      onError(/already been taken/i.test(err.message) ? `Client code “${f.code}” is already used by another client.` : err.message);
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="card">
+      <h2>Edit client</h2>
+      <form className="inline" onSubmit={save}>
+        <div><label>Code</label><input value={f.code} onChange={set('code')} required maxLength={20} /></div>
+        <div><label>Name</label><input value={f.name} onChange={set('name')} required /></div>
+        <div><label>Contact person</label><input value={f.contact_person} onChange={set('contact_person')} /></div>
+        <div><label>Phone</label><input value={f.phone} onChange={set('phone')} /></div>
+        <div><label>Email</label><input type="email" value={f.email} onChange={set('email')} /></div>
+        <div><label>Address</label><input value={f.address} onChange={set('address')} /></div>
+        <div><label>Status</label>
+          <select value={f.is_active ? '1' : '0'} onChange={(e) => setF({ ...f, is_active: e.target.value === '1' })}>
+            <option value="1">Active</option><option value="0">Disabled</option>
+          </select>
+        </div>
+        <div><button disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button></div>
+      </form>
+      {client.code !== f.code && <p className="hint">Changing the client code also changes the prefix of new activation codes. The software's <code>sla_client_code</code> must match.</p>}
     </div>
   );
 }

@@ -16,9 +16,10 @@ class SubscriptionController extends Controller
             'client_id'        => 'required|exists:clients,id',
             'application_id'   => ['required', 'exists:applications,id',
                 Rule::unique('subscriptions')->where('client_id', $request->input('client_id'))],
-            'quarterly_amount' => 'required|numeric|min:0',
+            'quarterly_amount' => 'nullable|numeric|min:0',
             'note'             => 'nullable|string',
         ]);
+        $data['quarterly_amount'] = $data['quarterly_amount'] ?? 0;
         return response()->json(Subscription::create($data)->load('application'), 201);
     }
 

@@ -47,12 +47,13 @@ class PaymentController extends Controller
             'subscription_id' => 'required|exists:subscriptions,id',
             'period_from'     => 'required|date',
             'period_to'       => 'required|date|after_or_equal:period_from',
-            'amount'          => 'required|numeric|min:0',
+            'amount'          => 'nullable|numeric|min:0',
             'paid_at'         => 'required|date',
             'method'          => 'nullable|string|max:50',
             'reference'       => 'nullable|string|max:255',
             'note'            => 'nullable|string',
         ]);
+        $data['amount'] = $data['amount'] ?? 0;   // amount is optional
         $userId = $request->user()->id;
 
         [$payment, $code] = DB::transaction(function () use ($data, $userId) {
